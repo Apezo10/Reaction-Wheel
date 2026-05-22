@@ -1,0 +1,44 @@
+#include <Arduino.h>
+
+const int IN1 = 26;
+const int IN2 = 27;
+const int ENA = 25;
+
+const int pwmChannel = 0;
+const int frequency = 1000;
+const int resolution = 8;
+
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  ledcSetup(pwmChannel, frequency, resolution);
+  ledcAttachPin(ENA, pwmChannel);
+}
+
+void loop() {
+  ledcWrite(pwmChannel, 80);
+  delay(5000);
+
+  ledcWrite(pwmChannel, 88);
+  delay(5000);
+
+  ledcWrite(pwmChannel, 100);
+  delay(5000);
+
+  ledcWrite(pwmChannel, 150);
+  delay(5000);
+
+  ledcWrite(pwmChannel, 220);
+  delay(5000);
+
+ledcWrite(pwmChannel, 255);
+  delay(5000);
+
+  ledcWrite(pwmChannel, 0);
+  delay (5000);
+}
