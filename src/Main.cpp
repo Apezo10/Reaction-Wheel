@@ -33,7 +33,7 @@ const unsigned long debugPeriodMs = 100;    // 10 Hz
 // Measured mounted pitch range. The target balance angle is centered at pi/2.
 const float pitchLeftLimit = 0.566f;
 const float pitchRightLimit = 2.58f;
-const float targetPitch = PI / 2.0f;
+const float targetPitch = 1.200f;
 
 // Physical parameters for simulation/model-based tuning.
 const float wheelMassKg = 0.046f;
@@ -59,8 +59,8 @@ const float motorStallTorqueNm = motorStallTorqueGcm * gramCmToNm;
 const float motorStallCurrentA = 10.0f;
 const float motorCurrentLimitA = 2.0f;
 const float estimatedMaxMotorTorqueNm = motorStallTorqueNm * (motorCurrentLimitA / motorStallCurrentA);
-const float maxAllowedPitchErrorRad = 0.15f;
-const float recoveryReenableErrorRad = 0.15f;
+const float maxAllowedPitchErrorRad = 10.0f;
+const float recoveryReenableErrorRad = 1.0f;
 const unsigned long recoveryReenableHoldMs = 3000;
 
 // Controller behavior near upright.
@@ -81,7 +81,7 @@ const int maxCommandStepPerCycle = 12;
 */
 const float angleSign = 1.0f;
 const float gyroPitchSign = 1.0f;
-const int motorSign = 1;
+const int motorSign = -1;
 
 // Full-range PWM gains. The units are PWM counts per radian and PWM counts per
 // radian/second because the controller output drives PWM directly.
