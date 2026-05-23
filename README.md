@@ -285,7 +285,7 @@ torque have not been measured.
 | `src/Main.cpp` | Main ESP32 firmware |
 | `platformio.ini` | PlatformIO board, upload, monitor, and library settings |
 | `NOTES.md` | Development notes, assumptions, and remaining measurements |
-| `src/MotorDriver.txt` | Simple motor driver test sequence |
+| `src/MotorDriver.txt` | Simple motor driver test sequence to find stall pwm |
 
 ## Build
 
