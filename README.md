@@ -6,7 +6,7 @@ DC motor. The controller estimates the body pitch angle and drives a reaction
 wheel to hold the system near the upright target angle:
 
 ```text
-target pitch = pi / 2 rad
+target pitch = 1.200 rad
 ```
 
 The current firmware is ready for constrained hardware testing and presentation.
