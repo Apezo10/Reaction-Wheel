@@ -1,7 +1,7 @@
 # Reaction Wheel PID Validation Model
 
 This folder contains MATLAB/Simulink tooling to validate the PID controller in
-`src/Main.cpp`.
+`src/ReactionWheelController.cpp`.
 
 ## Files
 
@@ -12,13 +12,13 @@ This folder contains MATLAB/Simulink tooling to validate the PID controller in
 
 ## Model Assumptions
 
-- State is pitch error around upright: `pitch - pi/2`.
+- State is pitch error around upright: `pitch - targetPitch`.
 - The plant is the nonlinear inverted-pendulum pitch approximation:
   `theta_ddot = (m*g*l/J)*sin(theta) - motorTorque/J`.
 - The controller mirrors firmware behavior:
-  - `Kp = 700`
-  - `Ki = 0`
-  - `Kd = 55`
+- `Kp = 5300`
+- `Ki = 30`
+- `Kd = 650`
   - `Ts = 0.005 s`
   - PWM saturation at `+/-255`
   - command slew limit of `12` PWM counts per control cycle

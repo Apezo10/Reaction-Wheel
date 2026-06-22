@@ -1,8 +1,9 @@
 function build_reaction_wheel_pid_validation_model()
 %BUILD_REACTION_WHEEL_PID_VALIDATION_MODEL Build a Simulink PID validation model.
 %
-% The generated model mirrors the embedded controller in src/Main.cpp:
-% error = pitch - pi/2, derivative uses pitch rate, output is signed PWM,
+% The generated model mirrors the embedded controller in
+% src/ReactionWheelController.cpp: error = pitch - targetPitch, derivative uses
+% pitch rate, output is signed PWM,
 % output is saturated to +/-255, commands slew by 12 counts per 5 ms loop,
 % and nonzero commands are raised to the motor's minimum active PWM.
 
@@ -12,17 +13,17 @@ if bdIsLoaded(model)
 end
 
 Ts = 0.005;
-targetPitch = pi / 2;
+targetPitch = 1.150;
 initialPitchError = 0.08;
 initialPitchRate = 0.0;
 simStopTime = 5.0;
 
-Kp = 700.0;
-Ki = 0.0;
-Kd = 55.0;
+Kp = 5300.0;
+Ki = 30.0;
+Kd = 650.0;
 maxPwm = 255;
 minActivePwm = 90;
-maxCommandStepPerCycle = 12;
+maxCommandStepPerCycle = 32;
 balanceDeadbandRad = 0.015;
 rateDeadbandRps = 0.08;
 

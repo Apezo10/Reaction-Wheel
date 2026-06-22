@@ -7,7 +7,7 @@ Build a 1-dimensional reaction wheel balancing system using an ESP32, MPU6050 IM
 The controller should:
 
 - Balance the body about the pitch axis.
-- Hold the desired balance angle at `pi / 2` radians.
+- Hold the desired balance angle at the configured `targetPitch`.
 - Reject disturbances.
 - Use a Kalman filter for pitch estimation.
 - Use PID control for motor torque command.
@@ -18,10 +18,12 @@ The controller should:
 C:\Users\Adins\OneDrive\Documents\PlatformIO\vs_code Projects\Reaction Wheel
 ```
 
-Main source file:
+Firmware source files:
 
 ```text
-src\main.cpp
+include\ReactionWheelController.h
+src\Main.cpp
+src\ReactionWheelController.cpp
 ```
 
 ## Current PlatformIO Setup
@@ -99,7 +101,7 @@ Current motor test result:
 
 - Motor appears to stall around PWM `88`.
 - Minimum useful PWM is `90` in either direction.
-- If the controller output magnitude is below `90`, command PWM `0` to avoid wasting power.
+- Nonzero controller commands below PWM `90` are raised to PWM `90` to overcome stiction.
 - PWM command range is 8-bit: `0` to `255`.
 
 Measured motor direction with motor label at bottom:
@@ -107,8 +109,8 @@ Measured motor direction with motor label at bottom:
 - `IN1 HIGH`, `IN2 LOW`: wheel spins clockwise and sends the wheel/body right.
 - `IN1 LOW`, `IN2 HIGH`: wheel spins counterclockwise and sends the wheel/body left.
 - Therefore:
-  - `pitch < pi / 2`: spin counterclockwise.
-  - `pitch > pi / 2`: spin clockwise.
+  - `pitch < targetPitch`: spin counterclockwise.
+  - `pitch > targetPitch`: spin clockwise.
 
 ## Current IMU Code Behavior
 
@@ -131,24 +133,24 @@ Important:
 
 - Pitch when tilted all the way left: `0.566 rad`.
 - Pitch when tilted all the way right: `2.58 rad`.
-- Target pitch: `pi / 2 rad`.
+- Target pitch: `1.150 rad`.
 - Pitch increases as the wheel/body tilts right.
-- The mounted pitch range brackets `pi / 2`, so the current pitch convention can be used for initial closed-loop testing.
+- The mounted pitch range brackets `targetPitch`, so the current pitch convention can be used for initial closed-loop testing.
 
 ## Intended Embedded Control Structure
 
 Recommended next control implementation:
 
-- Fixed-timestep loop, likely `200 Hz`. Complete in `src\Main.cpp`.
-- Loop period: `5 ms`. Complete in `src\Main.cpp`.
-- Kalman filter combining. Complete in `src\Main.cpp`.
+- Fixed-timestep loop, likely `200 Hz`. Complete in `src\ReactionWheelController.cpp`.
+- Loop period: `5 ms`. Complete in `src\ReactionWheelController.cpp`.
+- Kalman filter combining. Complete in `src\ReactionWheelController.cpp`.
   - accelerometer-derived pitch angle
   - gyro pitch rate
 - PID controller using filtered pitch.
 - Target angle:
 
 ```cpp
-const float targetPitch = PI / 2.0;
+const float targetPitch = 1.150f;
 ```
 
 - Bidirectional L298N motor command function:
@@ -187,14 +189,14 @@ const float angleSign = 1.0;   // or -1.0
 const int motorSign = 1;       // or -1
 ```
 
-Initial sign convention implemented in `src\Main.cpp`:
+Initial sign convention implemented in `src\ReactionWheelController.cpp`:
 
 - Error is calculated as `pitch - targetPitch`.
 - Positive command spins the wheel clockwise (`IN1 HIGH`, `IN2 LOW`).
 - Negative command spins the wheel counterclockwise (`IN1 LOW`, `IN2 HIGH`).
 - This matches the measured requirement:
-  - `pitch < pi / 2` produces negative/CCW command.
-  - `pitch > pi / 2` produces positive/CW command.
+  - `pitch < targetPitch` produces negative/CCW command.
+  - `pitch > targetPitch` produces positive/CW command.
 
 These signs should still be verified gently before aggressive PID tuning.
 
@@ -205,7 +207,7 @@ These signs should still be verified gently before aggressive PID tuning.
 1. Confirm the real mounted IMU pitch reading at the desired balance position. Complete.
    - Left limit: `0.566 rad`.
    - Right limit: `2.58 rad`.
-   - Target: `pi / 2 rad`.
+   - Target: `1.150 rad`.
 
 2. Confirm positive pitch direction. Complete.
    - Pitch increases as the wheel/body tilts right.
@@ -223,7 +225,7 @@ These signs should still be verified gently before aggressive PID tuning.
 
 5. Measure motor deadband in both directions. Initial value complete.
    - Minimum active PWM: `90`.
-   - Commands below `90` should be sent as `0`.
+   - Nonzero commands below `90` are raised to `90`.
 
 6. Choose motor behavior at zero command.
    - Coast: both direction pins low or PWM zero.
@@ -239,8 +241,8 @@ Collect if possible:
 - Distance from pivot to body center of mass: `0.0517 m`.
 - Body moment of inertia about pitch axis: `0.000375 kg*m^2`.
 - Reaction wheel mass: `0.046 kg`.
-- Reaction wheel radius: `0.0425 m`.
-- Reaction wheel moment of inertia: `0.0000415 kg*m^2`.
+- Reaction wheel radius: `0.160 m`.
+- Reaction wheel moment of inertia: `0.0005888 kg*m^2`.
 - Motor torque constant, if known.
 - Motor speed constant, if known.
 - Motor winding resistance, if known.
@@ -261,12 +263,12 @@ Collect if possible:
 
 ## Suggested Next Step
 
-The current motor step-test logic in `src\Main.cpp` has been replaced with a control-ready structure:
+The current motor step-test logic in `src\ReactionWheelController.cpp` has been replaced with a control-ready structure:
 
 1. Keep IMU calibration. Complete.
 2. Add fixed `5 ms` control loop timing. Complete.
 3. Add 1D Kalman filter for pitch. Complete.
-4. Add PID controller targeting `PI / 2`. Complete.
+4. Add PID controller targeting `targetPitch`. Complete.
 5. Add L298N bidirectional motor command function. Complete.
 6. Add conservative output limits for first test. Complete.
 7. Print debug values at a slower rate, such as `10 Hz`, while the control loop runs at `200 Hz`. Complete.

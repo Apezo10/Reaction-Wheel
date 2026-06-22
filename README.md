@@ -6,12 +6,12 @@ DC motor. The controller estimates the body pitch angle and drives a reaction
 wheel to hold the system near the upright target angle:
 
 ```text
-target pitch = 1.200 rad
+target pitch = 1.150 rad
 ```
 
 The current firmware is ready for constrained hardware testing and presentation.
 It includes sensor calibration, pitch filtering, PID control, signed PWM motor
-control with motor deadband handling, and a recovery lockout that prevents the
+control with motor stiction compensation, and a recovery lockout that prevents the
 motor from fighting when the rig is too far from the balance point.
 
 ## System Overview
@@ -26,7 +26,7 @@ Calibration and unit conversion
 1D Kalman pitch estimate
         |
         v
-Pitch error from pi / 2
+Pitch error from targetPitch
         |
         v
 Recovery lockout check
@@ -69,8 +69,8 @@ Serial debug output runs at:
 | Motor rated torque | `0.7 kg*cm = 0.0686 N*m` |
 | Motor rated current | `0.5 A` |
 | Reaction wheel mass | `0.046 kg` |
-| Reaction wheel radius | `0.0425 m` |
-| Reaction wheel moment of inertia | `0.0000415 kg*m^2` |
+| Reaction wheel radius | `0.160 m` |
+| Reaction wheel moment of inertia | `0.0005888 kg*m^2` |
 | Body moment of inertia | `0.000375 kg*m^2` |
 | Total body mass with wheel | `0.271 kg` |
 | COM distance to pivot | `0.0517 m` |
@@ -102,11 +102,12 @@ The measured motor orientation assumes the motor label is at the bottom.
 Pitch increases as the wheel/body tilts to the right.
 
 ```text
-pitch < pi / 2  -> negative command -> counterclockwise wheel spin
-pitch > pi / 2  -> positive command -> clockwise wheel spin
+pitch < targetPitch  -> negative command -> counterclockwise wheel spin
+pitch > targetPitch  -> positive command -> clockwise wheel spin
 ```
 
-If the IMU or motor wiring is changed, adjust these constants in `src/Main.cpp`:
+If the IMU or motor wiring is changed, adjust these constants in
+`src/ReactionWheelController.cpp`:
 
 ```cpp
 const float angleSign = 1.0f;
@@ -121,17 +122,19 @@ Measured mounted pitch range:
 ```text
 left mechanical limit  = 0.566 rad
 right mechanical limit = 2.58 rad
-target pitch           = pi / 2 rad = 1.571 rad
+configured target      = 1.150 rad
 ```
 
-The target pitch is inside the measured mechanical range.
+The configured target pitch is inside the measured mechanical range.
 
 ## Firmware Features
 
-Main source file:
+Firmware source files:
 
 ```text
+include/ReactionWheelController.h
 src/Main.cpp
+src/ReactionWheelController.cpp
 ```
 
 Implemented features:
@@ -141,10 +144,9 @@ Implemented features:
 - Conversion of gyroscope readings to `rad/s`.
 - Fixed-period `200 Hz` control loop.
 - 1D Kalman filter for pitch estimation.
-- PID controller targeting `pi / 2 rad`.
+- PID controller targeting `1.150 rad`.
 - Signed 8-bit PWM output from `-255` to `+255`.
-- Motor deadband handling: commands with magnitude at or below `90` are sent as
-  zero.
+- Motor stiction handling: nonzero commands are raised to at least PWM `90`.
 - Bidirectional L298N motor control.
 - Recovery lockout when the pitch is outside the estimated recoverable range.
 - 3-second stable hold requirement before re-enabling control after lockout.
@@ -162,9 +164,9 @@ PWM = Kp * error + Ki * integral(error) + Kd * pitchRate
 Current gains:
 
 ```cpp
-float Kp = 700.0f;
-float Ki = 0.0f;
-float Kd = 55.0f;
+float Kp = 5300.0f;
+float Ki = 30.0f;
+float Kd = 650.0f;
 ```
 
 The controller output is signed PWM, not torque. These gains therefore have PWM
@@ -186,7 +188,7 @@ Hardware testing showed that the motor does not spin reliably unless PWM is
 above `90` in either direction. The firmware therefore applies:
 
 ```text
-if abs(PWM) <= 90, command = 0
+if PWM != 0 and abs(PWM) < 90, command = sign(PWM) * 90
 ```
 
 Useful motor command ranges are:
@@ -206,10 +208,10 @@ gravity torque balance:
 motor torque = mass * gravity * COM distance * sin(angle error)
 ```
 
-With the current motor rated torque:
+With the current-limited stall-line motor torque estimate:
 
 ```cpp
-const float estimatedMaxMotorTorqueNm = 0.0686f;
+const float estimatedMaxMotorTorqueNm = 0.0140f;
 ```
 
 and the measured body values:
@@ -223,14 +225,22 @@ gravity = 9.81 m/s^2
 the calculated maximum recoverable error is approximately:
 
 ```text
-0.523 rad from pi / 2
+0.102 rad from targetPitch
 ```
 
-If the pitch error exceeds this value, the firmware stops commanding the motor.
+The firmware prints this estimate at startup. The current configured lockout
+limit is intentionally set wider during testing:
+
+```cpp
+const float maxAllowedPitchErrorRad = 10.0f;
+```
+
+If the pitch leaves the measured mounted range or exceeds the configured limit,
+the firmware stops commanding the motor.
 Once locked out, the pitch must be manually brought back within:
 
 ```text
-plus or minus 0.3 rad from pi / 2
+plus or minus 1.0 rad from targetPitch
 ```
 
 and held there for:
@@ -247,10 +257,10 @@ power when the system is too far from the balance point to recover.
 ## Simulink Model
 
 For a first-order presentation model, use the linearized pitch plant around
-`pi / 2`:
+`targetPitch`:
 
 ```text
-theta_error = pitch - pi / 2
+theta_error = pitch - targetPitch
 ```
 
 The torque-to-angle plant is:
@@ -282,7 +292,9 @@ torque have not been measured.
 
 | Path | Purpose |
 | --- | --- |
-| `src/Main.cpp` | Main ESP32 firmware |
+| `include/ReactionWheelController.h` | Controller function declarations |
+| `src/Main.cpp` | Minimal Arduino setup/loop entry point |
+| `src/ReactionWheelController.cpp` | Main ESP32 controller implementation |
 | `platformio.ini` | PlatformIO board, upload, monitor, and library settings |
 | `NOTES.md` | Development notes, assumptions, and remaining measurements |
 | `src/MotorDriver.txt` | Simple motor driver test sequence to find stall pwm |
@@ -324,7 +336,7 @@ Telemetry fields:
 | `rawPitch` | Accelerometer-derived pitch angle |
 | `kalmanPitch` | Filtered pitch estimate |
 | `pitchRate` | Gyroscope pitch rate |
-| `error` | Pitch error from `pi / 2` |
+| `error` | Pitch error from `targetPitch` |
 | `P`, `I`, `D` | PID term values |
 | `pid` | Unsaturated PID calculation before integer command |
 | `motor` | Final signed PWM command |
@@ -341,17 +353,17 @@ Telemetry fields:
 5. Confirm the printed maximum recoverable pitch error.
 6. Hold or physically constrain the rig before enabling motor power.
 7. Enable motor power.
-8. Tilt below `pi / 2` and confirm the motor command is negative.
-9. Tilt above `pi / 2` and confirm the motor command is positive.
+8. Tilt below `targetPitch` and confirm the motor command is negative.
+9. Tilt above `targetPitch` and confirm the motor command is positive.
 10. Move the rig outside the recoverable angle and confirm `lockout: 1`.
-11. Move it back within `plus or minus 0.3 rad` of `pi / 2`.
+11. Move it back within `plus or minus 1.0 rad` of `targetPitch`.
 12. Confirm `holdMs` counts to about `3000` before control resumes.
 
 ## Safety Notes
 
 - Keep the rig physically constrained during early tests.
-- The firmware can command full PWM from `-255` to `+255`, but commands with
-  magnitude at or below `90` are sent as zero.
+- The firmware can command full PWM from `-255` to `+255`; nonzero commands
+  below magnitude `90` are raised to `90` to overcome motor stiction.
 - Keep one hand near motor power cutoff during testing.
 - Verify motor and pitch sign conventions before increasing gains.
 - The recovery angle uses the motor's rated output torque, not measured stall
