@@ -65,7 +65,7 @@ const float motorStallCurrentA = 10.0f;
 const float motorCurrentLimitA = 2.0f;
 const float estimatedMaxMotorTorqueNm = motorStallTorqueNm * (motorCurrentLimitA / motorStallCurrentA);
 const float maxAllowedPitchErrorRad = 10.0f;
-const float recoveryReenableErrorRad = 1.0f;
+const float recoveryReenableErrorRad = 0.7f;
 const unsigned long recoveryReenableHoldMs = 3000;
 
 // Controller behavior near upright.

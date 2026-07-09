@@ -15,7 +15,7 @@ The controller should:
 ## Current Project Location
 
 ```text
-C:\Users\Adins\OneDrive\Documents\PlatformIO\vs_code Projects\Reaction Wheel
+C:\Users\Adins\OneDrive\Documents\VScode Projects\Reaction Wheel
 ```
 
 Firmware source files:
@@ -81,7 +81,7 @@ Motor:
 
 ## Current Motor Wiring / Pin Assumptions
 
-Current `main.cpp` pin definitions:
+Current `src\ReactionWheelController.cpp` pin definitions:
 
 ```cpp
 const int ENA = 25;
@@ -278,4 +278,4 @@ Next hardware step:
 1. Upload and test with the rig held securely.
 2. Confirm that below-target pitch produces a negative motor debug value and counterclockwise spin.
 3. Confirm that above-target pitch produces a positive motor debug value and clockwise spin.
-4. Tune `Kp`, `Ki`, `Kd`, `startupMaxPwm`, and Kalman constants cautiously.
+4. Tune `Kp`, `Ki`, `Kd`, motor command limits, and Kalman constants cautiously.

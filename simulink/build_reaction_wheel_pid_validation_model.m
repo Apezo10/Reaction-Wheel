@@ -4,7 +4,7 @@ function build_reaction_wheel_pid_validation_model()
 % The generated model mirrors the embedded controller in
 % src/ReactionWheelController.cpp: error = pitch - targetPitch, derivative uses
 % pitch rate, output is signed PWM,
-% output is saturated to +/-255, commands slew by 12 counts per 5 ms loop,
+% output is saturated to +/-255, commands slew by 32 counts per 5 ms loop,
 % and nonzero commands are raised to the motor's minimum active PWM.
 
 model = "reaction_wheel_pid_validation";

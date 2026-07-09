@@ -9,10 +9,22 @@ wheel to hold the system near the upright target angle:
 target pitch = 1.150 rad
 ```
 
-The current firmware is ready for constrained hardware testing and presentation.
-It includes sensor calibration, pitch filtering, PID control, signed PWM motor
-control with motor stiction compensation, and a recovery lockout that prevents the
-motor from fighting when the rig is too far from the balance point.
+The current prototype demonstrates recovery from about `0.7 rad` away from the
+target angle under constrained hardware testing. The repo includes the ESP32
+firmware, MATLAB/Simulink validation tools, CAD link, hardware notes, and a demo
+video.
+
+## Highlights
+
+- 200 Hz fixed-period control loop on ESP32.
+- MPU6050 pitch estimation with calibration and a 1D Kalman filter.
+- PID control with signed 8-bit PWM output through an L298N motor driver.
+- Motor stiction compensation using a measured minimum active PWM of `90`.
+- Recovery lockout and re-arm behavior for constrained hardware testing.
+- Documented hardware limitations from the demo video.
+
+See [RESULTS.md](RESULTS.md) for the hardware demo video and observed test
+results.
 
 ## System Overview
 
@@ -74,6 +86,12 @@ Serial debug output runs at:
 | Body moment of inertia | `0.000375 kg*m^2` |
 | Total body mass with wheel | `0.271 kg` |
 | COM distance to pivot | `0.0517 m` |
+
+## CAD Model
+
+The mechanical design is available as an Onshape model:
+
+[Reaction wheel CAD model](https://cad.onshape.com/documents/4201795e03d9a97687172208/w/5edec32bb3c1e548ecd7e7db/e/9b3208c96c261615e151e6fc)
 
 ## Wiring
 
@@ -201,6 +219,11 @@ Useful motor command ranges are:
 
 ## Recovery Lockout
 
+Hardware testing in the demo video shows practical correction at about `0.7 rad`
+from `targetPitch`. This is the demonstrated correction range for the current
+prototype and should not be treated as a guarantee of recovery from larger
+disturbances.
+
 The firmware estimates the maximum recoverable pitch error using the static
 gravity torque balance:
 
@@ -228,8 +251,8 @@ the calculated maximum recoverable error is approximately:
 0.102 rad from targetPitch
 ```
 
-The firmware prints this estimate at startup. The current configured lockout
-limit is intentionally set wider during testing:
+The firmware prints this estimate at startup. The current lockout threshold is
+intentionally set wide for constrained testing:
 
 ```cpp
 const float maxAllowedPitchErrorRad = 10.0f;
@@ -240,7 +263,7 @@ the firmware stops commanding the motor.
 Once locked out, the pitch must be manually brought back within:
 
 ```text
-plus or minus 1.0 rad from targetPitch
+plus or minus 0.7 rad from targetPitch
 ```
 
 and held there for:
@@ -297,7 +320,9 @@ torque have not been measured.
 | `src/ReactionWheelController.cpp` | Main ESP32 controller implementation |
 | `platformio.ini` | PlatformIO board, upload, monitor, and library settings |
 | `NOTES.md` | Development notes, assumptions, and remaining measurements |
-| `src/MotorDriver.txt` | Simple motor driver test sequence to find stall pwm |
+| `RESULTS.md` | Hardware demo results and observed limitations |
+| `results/reaction-wheel-0.7rad-demo.MOV` | Reaction wheel demo video |
+| [Onshape CAD model](https://cad.onshape.com/documents/4201795e03d9a97687172208/w/5edec32bb3c1e548ecd7e7db/e/9b3208c96c261615e151e6fc) | Mechanical model for the reaction wheel assembly |
 
 ## Build
 
@@ -356,7 +381,7 @@ Telemetry fields:
 8. Tilt below `targetPitch` and confirm the motor command is negative.
 9. Tilt above `targetPitch` and confirm the motor command is positive.
 10. Move the rig outside the recoverable angle and confirm `lockout: 1`.
-11. Move it back within `plus or minus 1.0 rad` of `targetPitch`.
+11. Move it back within `plus or minus 0.7 rad` of `targetPitch`.
 12. Confirm `holdMs` counts to about `3000` before control resumes.
 
 ## Safety Notes
@@ -379,5 +404,10 @@ Telemetry fields:
 - Pivot friction and wheel bearing friction are not modeled.
 - The recovery angle is a static estimate and does not include body angular
   velocity or wheel speed saturation.
+- The `550 rpm` motor causes the reaction wheel to saturate quickly, limiting
+  how long it can add useful angular momentum during recovery.
+- The PWM deadband prevents accurate small corrections near the target because
+  nonzero commands below magnitude `90` are stepped up to the minimum active
+  motor command.
 - Current gains are realistic starting values, but final values must be tuned
   on hardware.

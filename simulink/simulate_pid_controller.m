@@ -9,12 +9,12 @@ Ts = 0.005;
 tEnd = 5.0;
 t = 0:Ts:tEnd;
 
-Kp = 700.0;
-Ki = 0.0;
-Kd = 55.0;
+Kp = 5300.0;
+Ki = 30.0;
+Kd = 650.0;
 maxPwm = 255;
 minActivePwm = 90;
-maxCommandStepPerCycle = 12;
+maxCommandStepPerCycle = 32;
 balanceDeadbandRad = 0.015;
 rateDeadbandRps = 0.08;
 

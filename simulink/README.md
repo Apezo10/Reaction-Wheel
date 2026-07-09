@@ -16,12 +16,12 @@ This folder contains MATLAB/Simulink tooling to validate the PID controller in
 - The plant is the nonlinear inverted-pendulum pitch approximation:
   `theta_ddot = (m*g*l/J)*sin(theta) - motorTorque/J`.
 - The controller mirrors firmware behavior:
-- `Kp = 5300`
-- `Ki = 30`
-- `Kd = 650`
+  - `Kp = 5300`
+  - `Ki = 30`
+  - `Kd = 650`
   - `Ts = 0.005 s`
   - PWM saturation at `+/-255`
-  - command slew limit of `12` PWM counts per control cycle
+  - command slew limit of `32` PWM counts per control cycle
   - balance deadband of `0.015 rad`
   - rate deadband of `0.08 rad/s`
   - nonzero motor commands raised to minimum active PWM `90`
