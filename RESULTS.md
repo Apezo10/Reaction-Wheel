@@ -2,7 +2,7 @@
 
 ## Hardware Demo
 
-Video: [reaction-wheel-0.7rad-demo.MOV](results/reaction-wheel-0.7rad-demo.MOV)
+![Reaction wheel hardware demo](results/reaction-wheel-demo.gif)
 
 The hardware demo shows the reaction wheel correcting the rig from about
 `0.7 rad` away from the target angle. This is the observed practical correction

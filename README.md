@@ -23,8 +23,9 @@ video.
 - Recovery lockout and re-arm behavior for constrained hardware testing.
 - Documented hardware limitations from the demo video.
 
-See [RESULTS.md](RESULTS.md) for the hardware demo video and observed test
-results.
+See [RESULTS.md](RESULTS.md) for the hardware demo and observed test results.
+
+![Reaction wheel hardware demo](results/reaction-wheel-demo.gif)
 
 ## System Overview
 
@@ -321,7 +322,7 @@ torque have not been measured.
 | `platformio.ini` | PlatformIO board, upload, monitor, and library settings |
 | `NOTES.md` | Development notes, assumptions, and remaining measurements |
 | `RESULTS.md` | Hardware demo results and observed limitations |
-| `results/reaction-wheel-0.7rad-demo.MOV` | Reaction wheel demo video |
+| `results/reaction-wheel-demo.gif` | Inline reaction wheel hardware demo |
 | [Onshape CAD model](https://cad.onshape.com/documents/4201795e03d9a97687172208/w/5edec32bb3c1e548ecd7e7db/e/9b3208c96c261615e151e6fc) | Mechanical model for the reaction wheel assembly |
 
 ## Build
